@@ -1,41 +1,16 @@
 main {
     min-height: 100vh;
-    background-color: rgb(68, 3, 3);
+    background: "#f4f4f4";
     font-family: Arial, Helvetica, sans-serif;
-    text-align: center;
+    margin-left: 10px;
+
 }
 
-/* selecting id */
-#title {
-    color: aliceblue;
-}
-
-/* selecting class */
-.intro {
-    padding: 10px;
-    color: bisque;
-    font-size: 18px;
-}
-
-.card {
-    background-color: aquamarine;
-    width: 300px;
-    
-    /*Box Model*/
-    padding: 10px;
-    margin: 10px auto;
-    border-radius: 10px;
-}
-
-#list {
-    text-align: left;
-    color: rgb(68, 3, 3);
+img {
+    display: block;
+    width: 200px;
 }
 
 button {
-  background-color: purple;
-  color: white;
-  border: none;
-  padding: 10px 10px;
-  cursor: pointer;
+  margin-right: 200px;
 }

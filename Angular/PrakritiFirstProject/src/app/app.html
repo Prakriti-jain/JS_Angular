@@ -1,6 +1,109 @@
 <main>
-<h1> Hello {{name}} </h1>
-<img [src]="url" (error) = "onImageError()">
+
+<h1> Profile Card </h1>
+
+<!-- Property binding + event binding -->
+<img
+    [src] = "profilePic",
+    (error) = "onImageError()"
+    alt="profile">
+
+<!-- Event binding -->
+<button (click) = "toggleUser()"> Toggle User</button>
+
+<!-- Interpolation + Null safe + default -->
+<p> Name: {{user?.name ?? 'Guest'}}</p>
+<p> Email: {{user?.email ?? '(no email)'}}</p>
+
+<!-- Template reference variable -->
+<input
+    #box 
+    type = "text"
+    placeholder="set your status"
+    (input) = "saveStatus(box.value)">
+
+<button (click) = "box.focus()"> Focus Input </button>
+<p> Status: {{status || '(empty)'}} </p>
+
+
+<!-- ------------------------------------------------------------------------------------------- -->
+
+<!-- Structural directive - ngIf -->
+
+<!-- if user is logged in then it gets logout and vice versa -->
+<!-- jab false hoga tabh pura dom <p> hat jaayega -->
+<button (click) = "switch()"> {{isLoggedIn ? 'Logout' : 'Login'}} </button>
+<p *ngIf = "isLoggedIn; else loggedOut"> Welcome you are Logged In!!</p>
+
+<!-- else with ngIf -->
+<ng-template #loggedOut> 
+    <p> You have login in!!</p>
+</ng-template>
+
+
+
+<!-- ngFor -->
+<!-- 
+<ng-container *ngIf="items.length > 0">
+  <li *ngFor="let item of items">
+    {{ item }}
+  </li>
+</ng-container> -->
+
+<ul>
+    <li *ngFor = "let item of user?.skills">
+        {{item}}
+    </li>
+</ul>
+
+
+<!-- Ng Template Outlet -->
+<h2> Template outlet demo</h2>
+<button (click) = "showInfo()"> Show Info </button>
+<button (click) = 'showWarning()'> Show Warning</button>
+
+<!-- Templates (let is used to read values that are passed to ) -->
+
+<ng-template #infoTemplate let-text > 
+    <p> {{text}}</p>
+</ng-template>
+
+<ng-template #warningTemplate let-text>
+    <p> {{text }} </p>
+</ng-template>
+
+ <!-- Template Rendering -->
+<!-- <ng-container
+    *ngTemplateOutlet = "currentTemplate === 'info' ? infoTemplate : warningTemplate;
+    context : {message : currentTemplate === 'info' ? 'This is info message' : 'This is warning message'}"
+>
+</ng-container> -->
+
+<!-- ANOTHER WAY FOR RENDERING (msg is implicit will be defined in the function showInfo() and showWarning() as this.msg = "this is info/warning message")-->
+<ng-container
+      [ngTemplateOutlet]="currentTemplate === 'info' ? infoTemplate : warningTemplate"
+      [ngTemplateOutletContext]="{ $implicit: msg }">
+</ng-container>
+
+<h2>Template Statement demo</h2>
+<button (click) = "count = count + 1"> Increment</button>
+
+<input
+placeholder = "Type"
+(input) = "text = $any($event.target).value" 
+[value] = "text"
+>
+
+<p> Count : {{count}}</p>
+<p> Text : {{text || '(empty)'}}</p>
+
+
+<!-- Pipes -->
+<h3> Built in Pipes</h3>
+<p> Today : {{ today | date:'yyyy-MM-dd'}} </p>
+<p> Name : {{user?.name | uppercase}}</p>
+<p>Expense : {{ 80 | currency:'USD'}}</p>
+
 </main>
 
 <router-outlet></router-outlet>

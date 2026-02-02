@@ -8,8 +8,7 @@ Templates are the HTML that a component renders.
 - Each component has a selector (e.g., app-root) that you place in HTML (index.html)
 - The root component renders inside index.html's <app-root>.
 
-{{ name }}: Interpolation reads the name field and inserts it as text.
-(click): Event binding updates the component state when the button is clicked.
+
 */
 
 
