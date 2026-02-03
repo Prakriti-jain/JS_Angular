@@ -4,7 +4,6 @@ import { ɵEmptyOutletComponent } from "@angular/router";
 @Component ({
     selector: 'child-comp',
     standalone: true,
-    imports: [ɵEmptyOutletComponent],
     templateUrl: './child.html',
     styleUrl: './child.css'
 })

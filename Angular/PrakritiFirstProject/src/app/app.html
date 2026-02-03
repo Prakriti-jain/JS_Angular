@@ -136,7 +136,7 @@
     </ul>
 
     <br> 
-    <!-- <h3> Parent Component </h3>
+    <h3> Parent Component </h3>
     <child-comp
         [name] = 'userName'
         (notify) = "onNotify($event)"
@@ -144,14 +144,31 @@
     </child-comp>
 
     <p> Message from Child : {{message}}</p>
-    <p> Counter Value : {{ counter }}</p> -->
+    <p> Counter Value : {{ counter }}</p>
 
     <!-- Content Projection -->
-    <h3> Content Projection </h3>
+    <!-- <h3> Content Projection </h3>
     <child-comp>
-        <h2> Hello </h2>
+        <h2 card-title> Profile </h2>
+        <p> Hello</p>
         <p> This is projected </p>
-    </child-comp>
+    </child-comp> -->
+
+    <!-- Two Way Binding -->
+    <br>
+    <h3> Two Way Binding Demo </h3>
+    <h4> Without ngModel</h4>
+    <input
+        [value] = 'inputName'
+        (input) = "inputName = $any($event.target).value">
+
+    <p> Input Name is : {{ inputName}} </p>
+
+    <h4> With ngModel </h4>
+    <input 
+        [(ngModel)] = 'inputName'>
+    
+        <p> Input Name is : {{ inputName}} </p>
 
 </div>
 

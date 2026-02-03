@@ -1,12 +1,20 @@
 <main>
-    <!-- <p> Child received name : {{ name }} </p>
+    <p> Child received name : {{ name }} </p>
     <button (click) = "sendBack()"> Send back to Parent</button>
-    <button (click) = "increment()">Click to Increment</button> -->
+    <button (click) = "increment()">Click to Increment</button>
 
     <!-- Content Projection -->
-     <div class = "class">
-        <ng-content>
-            <!-- this is where parent html will come -->
-        </ng-content>
-     </div>
+     <!-- <div class = "class">
+        <div class = "header">
+            <ng-content select = "[card-title]">
+
+            </ng-content>
+        </div>
+        <div class = "body">
+            <ng-content>
+
+            </ng-content>
+        </div>
+        
+     </div> -->
 </main>

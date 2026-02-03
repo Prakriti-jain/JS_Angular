@@ -3,6 +3,7 @@ import { RouterOutlet } from '@angular/router';
 import { NgIf, NgFor , NgTemplateOutlet} from '@angular/common';
 import { CommonModule } from '@angular/common';
 import { ChildComponent } from "./child";
+import { FormsModule } from '@angular/forms';
 /*
 
 {{ }}     → show data
@@ -115,7 +116,7 @@ type Item = { id : number; name : string};
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, NgIf, NgFor, NgTemplateOutlet, CommonModule, ChildComponent],
+  imports: [RouterOutlet, NgIf, NgFor, NgTemplateOutlet, CommonModule, ChildComponent, FormsModule],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })
@@ -236,4 +237,7 @@ export class App {
   onClicked(num : number) {
     this.counter = num;
   }
+
+  //Two way Binding
+  inputName = "";
 }
