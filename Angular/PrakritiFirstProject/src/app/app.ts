@@ -2,6 +2,7 @@ import { Component, signal } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { NgIf, NgFor , NgTemplateOutlet} from '@angular/common';
 import { CommonModule } from '@angular/common';
+import { ChildComponent } from "./child";
 /*
 
 {{ }}     → show data
@@ -66,14 +67,60 @@ Pipes
 - multiple pipes can be chained
 - need to import CommonModule 
 - percent:'1.0-2' --> isme 1.0-2 ka matlab hai decimal point se phele min 1 digit, decimal point ke baad min 0 and max 2 digit, this format can be changed accordingly
+
+
+Attribute Binding
+- Attributes - HTML tag ke upar likhi hui extra information (metadata) jo user ko dikhai nahi deti, par browser / screen reader / table layout use karta hai.
+- Use [attr.name] to set HTML attributes.
+- For attributes that do not map to DOM properties (e.g., ARIA, colspan).
+- Distinct from property binding.
+
+
+FORMAT TO DEFINE TABLE IN HTML
+
+<table>
+  <tr>table row
+    <th> heading </th>
+    <td> data </td>
+  <tr/> 
+</table>
+
+colspan -- Ye cell ek se zyada columns ki jagah le lo
+colspan ='2' means a cell took 2 column width
+
+--------------------------------------------------------------------------------------------------
+
+COMPONENT
+
+- INPUT - Pass data from parent to child with @Input().
+---> Child CLASS me @Input define karo
+---> Child HTML me input use karo
+---> Parent CLASS me data banao
+---> Parent HTML se data bhejo 
+
+- OUTPUT - Notify the parent of events with @Output()
+---> Child CLASS me @Output define karo
+---> Child CLASS me emit() karo
+---> Child HTML me event trigger karo
+---> Parent HTML me event suno
+---> Parent CLASS me handler likho
+
+- CONTENT PROJECTION - Parent apna HTML child ke andar daal deta hai using <ng-content>
+---> Child component banao
+---> Parent component me use karo
+
 */
+
+type Item = { id : number; name : string};
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, NgIf, NgFor, NgTemplateOutlet, CommonModule],
+  imports: [RouterOutlet, NgIf, NgFor, NgTemplateOutlet, CommonModule, ChildComponent],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })
+
+
 export class App {
   name = 'Angular';
   protected readonly title = signal('PrakritiFirstProject');
@@ -140,4 +187,53 @@ export class App {
 
   //Pipes
   today = new Date();
+
+  //Attribute Binding
+  wide = true;
+
+  get label() {
+    if(this.wide) return 'Table is wide';
+    return 'Table is narror';
+  }
+
+  switchLabel() {
+    this.wide = !this.wide;
+  }
+
+/*
+*ngFor ... trackBy
+- Enables DOM node reuse when items move, insert, or remove.
+- trackById: Uses trackById to give each item a stable identity so Angular can reuse DOM nodes when the list order changes.
+- trackById(index, item): Returns the unique key for an item. Here, it returns item.id regardless of index.
+- shuffle(): Reverses the array to demonstrate that with trackBy, Angular moves existing DOM nodes instead of destroying and recreating them.
+*/
+
+  items : Item[] = [
+    {id : 1, name : 'Alpha'},
+    {id : 2, name : 'Gamma'},
+    {id : 3, name : 'Beta'}
+  ]
+
+  Shuffle() {
+    this.items = [...this.items].reverse();
+  }
+
+  trackByID(index:number, item:Item) {
+    return item.id;
+  }
+
+  //Parent Component
+  //input
+  userName = 'Prakriti jain';
+
+  //output
+  message = '';
+  onNotify(msg : string) {
+    this.message = msg;
+  }
+
+  counter = 0;
+  onClicked(num : number) {
+    this.counter = num;
+  }
 }

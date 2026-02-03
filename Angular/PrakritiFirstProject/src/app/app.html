@@ -1,108 +1,159 @@
 <main>
 
-<h1> Profile Card </h1>
+<div class = "content">
+    <h1> Profile Card </h1>
 
-<!-- Property binding + event binding -->
-<img
-    [src] = "profilePic",
-    (error) = "onImageError()"
-    alt="profile">
+    <!-- Property binding + event binding -->
+    <img
+        [src] = "profilePic",
+        (error) = "onImageError()"
+        alt="profile">
 
-<!-- Event binding -->
-<button (click) = "toggleUser()"> Toggle User</button>
+    <!-- Event binding -->
+    <button (click) = "toggleUser()"> Toggle User</button>
 
-<!-- Interpolation + Null safe + default -->
-<p> Name: {{user?.name ?? 'Guest'}}</p>
-<p> Email: {{user?.email ?? '(no email)'}}</p>
+    <!-- Interpolation + Null safe + default -->
+    <p> Name: {{user?.name ?? 'Guest'}}</p>
+    <p> Email: {{user?.email ?? '(no email)'}}</p>
 
-<!-- Template reference variable -->
-<input
-    #box 
-    type = "text"
-    placeholder="set your status"
-    (input) = "saveStatus(box.value)">
+    <!-- Template reference variable -->
+    <input
+        #box 
+        type = "text"
+        placeholder="set your status"
+        (input) = "saveStatus(box.value)">
 
-<button (click) = "box.focus()"> Focus Input </button>
-<p> Status: {{status || '(empty)'}} </p>
-
-
-<!-- ------------------------------------------------------------------------------------------- -->
-
-<!-- Structural directive - ngIf -->
-
-<!-- if user is logged in then it gets logout and vice versa -->
-<!-- jab false hoga tabh pura dom <p> hat jaayega -->
-<button (click) = "switch()"> {{isLoggedIn ? 'Logout' : 'Login'}} </button>
-<p *ngIf = "isLoggedIn; else loggedOut"> Welcome you are Logged In!!</p>
-
-<!-- else with ngIf -->
-<ng-template #loggedOut> 
-    <p> You have login in!!</p>
-</ng-template>
+    <button (click) = "box.focus()"> Focus Input </button>
+    <p> Status: {{status || '(empty)'}} </p>
 
 
+    <!-- ------------------------------------------------------------------------------------------- -->
 
-<!-- ngFor -->
-<!-- 
-<ng-container *ngIf="items.length > 0">
-  <li *ngFor="let item of items">
-    {{ item }}
-  </li>
-</ng-container> -->
+    <!-- Structural directive - ngIf -->
 
-<ul>
-    <li *ngFor = "let item of user?.skills">
-        {{item}}
+    <!-- if user is logged in then it gets logout and vice versa -->
+    <!-- jab false hoga tabh pura dom <p> hat jaayega -->
+    <button (click) = "switch()"> {{isLoggedIn ? 'Logout' : 'Login'}} </button>
+    <p *ngIf = "isLoggedIn; else loggedOut"> Welcome you are Logged In!!</p>
+
+    <!-- else with ngIf -->
+    <ng-template #loggedOut> 
+        <p> You have login in!!</p>
+    </ng-template>
+
+
+
+    <!-- ngFor -->
+    <!-- 
+    <ng-container *ngIf="items.length > 0">
+    <li *ngFor="let item of items">
+        {{ item }}
     </li>
-</ul>
+    </ng-container> -->
+
+    <ul>
+        <li *ngFor = "let item of user?.skills">
+            {{item}}
+        </li>
+    </ul>
 
 
-<!-- Ng Template Outlet -->
-<h2> Template outlet demo</h2>
-<button (click) = "showInfo()"> Show Info </button>
-<button (click) = 'showWarning()'> Show Warning</button>
+    <!-- Ng Template Outlet -->
+    <h2> Template outlet demo</h2>
+    <button (click) = "showInfo()"> Show Info </button>
+    <button (click) = 'showWarning()'> Show Warning</button>
 
-<!-- Templates (let is used to read values that are passed to ) -->
+    <!-- Templates (let is used to read values that are passed to ) -->
 
-<ng-template #infoTemplate let-text > 
-    <p> {{text}}</p>
-</ng-template>
+    <ng-template #infoTemplate let-text > 
+        <p> {{text}}</p>
+    </ng-template>
 
-<ng-template #warningTemplate let-text>
-    <p> {{text }} </p>
-</ng-template>
+    <ng-template #warningTemplate let-text>
+        <p> {{text }} </p>
+    </ng-template>
 
- <!-- Template Rendering -->
-<!-- <ng-container
-    *ngTemplateOutlet = "currentTemplate === 'info' ? infoTemplate : warningTemplate;
-    context : {message : currentTemplate === 'info' ? 'This is info message' : 'This is warning message'}"
->
-</ng-container> -->
+    <!-- Template Rendering -->
+    <!-- <ng-container
+        *ngTemplateOutlet = "currentTemplate === 'info' ? infoTemplate : warningTemplate;
+        context : {message : currentTemplate === 'info' ? 'This is info message' : 'This is warning message'}"
+    >
+    </ng-container> -->
 
-<!-- ANOTHER WAY FOR RENDERING (msg is implicit will be defined in the function showInfo() and showWarning() as this.msg = "this is info/warning message")-->
-<ng-container
-      [ngTemplateOutlet]="currentTemplate === 'info' ? infoTemplate : warningTemplate"
-      [ngTemplateOutletContext]="{ $implicit: msg }">
-</ng-container>
+    <!-- ANOTHER WAY FOR RENDERING (msg is implicit will be defined in the function showInfo() and showWarning() as this.msg = "this is info/warning message")-->
+    <ng-container
+        [ngTemplateOutlet]="currentTemplate === 'info' ? infoTemplate : warningTemplate"
+        [ngTemplateOutletContext]="{ $implicit: msg }">
+    </ng-container>
 
-<h2>Template Statement demo</h2>
-<button (click) = "count = count + 1"> Increment</button>
+    <h2>Template Statement demo</h2>
+    <button (click) = "count = count + 1"> Increment</button>
 
-<input
-placeholder = "Type"
-(input) = "text = $any($event.target).value" 
-[value] = "text"
->
+    <input
+    placeholder = "Type"
+    (input) = "text = $any($event.target).value" 
+    [value] = "text"
+    >
 
-<p> Count : {{count}}</p>
-<p> Text : {{text || '(empty)'}}</p>
+    <p> Count : {{count}}</p>
+    <p> Text : {{text || '(empty)'}}</p>
 
 
-<!-- Pipes -->
-<h3> Built in Pipes</h3>
-<p> Today : {{ today | date:'yyyy-MM-dd'}} </p>
-<p> Name : {{user?.name | uppercase}}</p>
-<p>Expense : {{ 80 | currency:'USD'}}</p>
+    <!-- Pipes -->
+    <h3> Built in Pipes</h3>
+    <p> Today : {{ today | date:'yyyy-MM-dd'}} </p>
+    <p> Name : {{user?.name | uppercase}}</p>
+    <p>Expense : {{ 80 | currency:'INR'}}</p>
+
+    <!-- Attribute Binding -->
+    <h3> Attribute Binding </h3>
+    <button [attr.aria-label] = "label" (click) = switchLabel()> Switch Label </button>
+
+    <table border="2" style = "margin-top: 12px">
+        <tr> 
+            <th [attr.colspan] = 'wide ? 3:2' > First Name </th>
+            <th> Last Name </th>
+        </tr>
+        <tr>
+            <td [attr.colspan] = 'wide ? 2:1'> Prakriti </td>
+            <td> Jain </td>
+        </tr>
+
+        <tr>
+            <td> Sukhki </td>
+            <td> Prapti </td>
+        </tr>
+    </table>
+</div>
+
+
+<div class = "card">
+    <button style="width:150px;" (click) = Shuffle()> Shuffle your Items </button>
+    <ul>
+        <li *ngFor = "let item of items; trackBy: trackByID">
+            {{item.id}} -- {{item.name}}
+        </li>
+    </ul>
+
+    <br> 
+    <!-- <h3> Parent Component </h3>
+    <child-comp
+        [name] = 'userName'
+        (notify) = "onNotify($event)"
+        (clicked) = "onClicked($event)">
+    </child-comp>
+
+    <p> Message from Child : {{message}}</p>
+    <p> Counter Value : {{ counter }}</p> -->
+
+    <!-- Content Projection -->
+    <h3> Content Projection </h3>
+    <child-comp>
+        <h2> Hello </h2>
+        <p> This is projected </p>
+    </child-comp>
+
+</div>
 
 </main>
 
