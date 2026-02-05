@@ -1,10 +1,10 @@
-import { Component, signal } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
-import { NgIf, NgFor , NgTemplateOutlet} from '@angular/common';
-import { CommonModule } from '@angular/common';
-import { ChildComponent } from "./child";
-import { FormsModule } from '@angular/forms';
+
 /*
+
+Templates are the HTML that a component renders.
+- A component is a class that controls a view (its template).
+- Each component has a selector (e.g., app-root) that you place in HTML (index.html)
+- The root component renders inside index.html's <app-root>.
 
 {{ }}     → show data
 [ ]       → set property
@@ -58,6 +58,7 @@ ngTemplate Outlet
 Template Statements 
 - jo code HTML template ke andar likhte hai ya jo kisi event pe run hota hai.
 - $event = browser ka original (native) event object
+- event ke andar - type (input) , target (input element) , timeStamp (keyboard/mouse info) ye sab hota hai
 - $event.target is of type - EventTarget | null, but we know it is HTMLInputElement for sure so we use $any($event.target).value
 - [value]="text" - Jo bhi text me value hai, input box me dikhao
 
@@ -110,134 +111,63 @@ COMPONENT
 ---> Child component banao
 ---> Parent component me use karo
 
+Directives - add behaviour to existing elements and components
+- Structural directives (*ngIf/*ngFor) - add/remove dom
+- Attribute directives ([ngClass], custom [XXX]) - change the look/behaviour without creating/removing nodes
+- star syntax (*) is sugar that expands to <ng-template>
+
+Attribute Directive
+-- @Directive define karo
+-- decide to use custom directive or in built
+-- @Input() (optional)
+-- Host element ki property bind karo (@HostBinding)
+-- Host element ke events ko suno (@HostListener)
+-- use directive in html
+
+Angular Events
+-- events - lets template react to user actions
+-- Bind with (event) to run a component method; $event is the native Event.
+-- Use common DOM events like (click), (input), and key filters like (keyup.enter).
+
+- Basic Events
+--- Handle (click) to update component state.
+--- Read input values from $event.target (cast or use $any when needed).
+--- Track the last key pressed via (keyup).
+
+Debounced Input
+-- used when user types in really fast in input, so function calls at every key pressed -> ui lag
+-- User jab tak type kar raha hai → kuch mat karo, Jab user ruk jaaye → tab kaam karo
+
+----> FLOW
+1️. User pehli baar kuch likhta hai
+→ value temporary store hoti hai
+→ timer start hota hai
+
+2️. Agar timer ke beech user phir se kuch likh deta hai
+→ final value abhi update nahi hoti
+→ purana timer cancel ho jaata hai
+→ naya timer start hota hai
+
+3️. Ye process repeat hota rehta hai
+→ jab tak user likhta rehta hai
+
+4️. Jab user likhna band kar deta hai
+→ aur poora timer complete ho jaata hai
+→ tab FINAL value update hoti hai 
+
+Sirf last wali value hi accept hoti hai
 */
 
-type Item = { id : number; name : string};
+import { Component } from '@angular/core';
+import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, NgIf, NgFor, NgTemplateOutlet, CommonModule, ChildComponent, FormsModule],
+  standalone: true,
+  imports: [RouterOutlet, RouterLink, RouterLinkActive],
   templateUrl: './app.html',
-  styleUrl: './app.css'
+  styleUrl : './app.css'
 })
-
-
 export class App {
-  name = 'Angular';
-  protected readonly title = signal('PrakritiFirstProject');
 
-
-  //? prevents crashing of app when user is null or undefined
-  user?:{
-    name? : string,
-    email? : string,
-    skills? : string[]
-  }
-
-  profilePic = 'https://static.vecteezy.com/system/resources/previews/018/765/757/original/user-profile-icon-in-flat-style-member-avatar-illustration-on-isolated-background-human-permission-sign-business-concept-vector.jpg';
-  status = '';
-
-  toggleUser() {
-    //if user is present, mark it as absent
-    if(this.user) {
-      this.user = undefined;
-    }
-
-    //if user is not present, mark it as present by assigning it value
-    else {
-      this.user={
-        name: 'Prakriti',
-        email: 'prakriti@ciena.com',
-        // skills : undefined
-        skills : ['Angular', 'Typescript', 'SpringBoot', 'Java']
-      };
-    }
-  }
-
-  // image error handling
-  onImageError() {
-    this.profilePic = 'https://via.placeholder.com/120/ff0000/ffffff?text=No+Image';
-  }
-
-  saveStatus(value : string) {
-    this.status = value;
-  }
-
-  isLoggedIn = true; // if true then print Welcome, if false then it does not
-  switch() {
-    this.isLoggedIn = !this.isLoggedIn;
-  }
-  
-  // NgTemplateOutlet
-  currentTemplate : 'info' | 'warning' | null = null;
-  msg ='';
-
-  showInfo() {
-    this.currentTemplate = 'info';
-    this.msg = 'this is info message';
-  }
-
-  showWarning() {
-    this.currentTemplate = 'warning';
-    this.msg = 'this is warning message';
-  }
-
-  // statements and $event
-  count = 0;
-  text = '';
-
-  //Pipes
-  today = new Date();
-
-  //Attribute Binding
-  wide = true;
-
-  get label() {
-    if(this.wide) return 'Table is wide';
-    return 'Table is narror';
-  }
-
-  switchLabel() {
-    this.wide = !this.wide;
-  }
-
-/*
-*ngFor ... trackBy
-- Enables DOM node reuse when items move, insert, or remove.
-- trackById: Uses trackById to give each item a stable identity so Angular can reuse DOM nodes when the list order changes.
-- trackById(index, item): Returns the unique key for an item. Here, it returns item.id regardless of index.
-- shuffle(): Reverses the array to demonstrate that with trackBy, Angular moves existing DOM nodes instead of destroying and recreating them.
-*/
-
-  items : Item[] = [
-    {id : 1, name : 'Alpha'},
-    {id : 2, name : 'Gamma'},
-    {id : 3, name : 'Beta'}
-  ]
-
-  Shuffle() {
-    this.items = [...this.items].reverse();
-  }
-
-  trackByID(index:number, item:Item) {
-    return item.id;
-  }
-
-  //Parent Component
-  //input
-  userName = 'Prakriti jain';
-
-  //output
-  message = '';
-  onNotify(msg : string) {
-    this.message = msg;
-  }
-
-  counter = 0;
-  onClicked(num : number) {
-    this.counter = num;
-  }
-
-  //Two way Binding
-  inputName = "";
 }

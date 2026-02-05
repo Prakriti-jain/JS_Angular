@@ -1,36 +1,7 @@
-main {
-    min-height: 100vh;
-    background: "#f4f4f4";
-    font-family: Arial, Helvetica, sans-serif;
-    margin-left: 10px;
-    display: flex;
-    align-items: flex-start;
-
+#heading{
+   text-align : center;
 }
 
-img {
-    display: block;
-    width: 200px;
-}
-
-.card {
-    width: 300px;
-    margin-top: 100px;
-    padding: 16px;
-    border: 1;
-    margin-left: auto;
-}
-
-.content {
-    width: 300px;
-    padding: 16px;
-    border: 1;
-    flex: 1;
-}
-
-button {
-  margin-right: 200px;
-  color: black;
-  background-color: skyblue;
-  border-color: black;
+nav {
+    text-align: center;
 }

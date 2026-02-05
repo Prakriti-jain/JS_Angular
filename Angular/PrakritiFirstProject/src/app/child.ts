@@ -1,5 +1,6 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { ɵEmptyOutletComponent } from "@angular/router";
+import { CounterService } from './CounterService';
 
 @Component ({
     selector: 'child-comp',
@@ -24,4 +25,14 @@ export class ChildComponent {
         this.counter += 1;
         this.clicked.emit(this.counter);
     }
+
+
+
+
+    // ---------------- Using CounterService ---------------------------
+    
+    // 1. Make a constructor to use CounterService
+    constructor(public itemCounter : CounterService) { }
+
+
 }
