@@ -3,6 +3,7 @@ import { NextComponent } from './next';
 import { HomeComponent } from './home';
 import { ChildComponent } from './child';
 import { authGuard } from './next';
+import { RxjsComponent } from './rxjs';
 
 /*
 Routing - URL Change -> Component Change
@@ -83,6 +84,7 @@ export const routes: Routes = [
     {path : '', component:HomeComponent},
     {path : 'next/:id', component: NextComponent},
     // {path : 'about', loadComponent : () => Promise.resolve(ChildComponent)}
-    {path : 'about', component: ChildComponent, canActivate:[authGuard]}
+    {path : 'about', component: ChildComponent, canActivate:[authGuard]},
+    {path : 'rxjs', component: RxjsComponent}
 ];
  

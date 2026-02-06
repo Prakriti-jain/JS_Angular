@@ -33,16 +33,14 @@ export class HighlightDirective {
   }
 }
 
-
-
-
+// -------------------------------------------------------------------------------------------------
 
 @Component({
   selector: 'app-home',
   standalone:true,
   imports: [NgIf, NgFor, NgTemplateOutlet, CommonModule, ChildComponent, FormsModule, HighlightDirective],
-  templateUrl: './home.html',
-  styleUrl: './home.css'
+  templateUrl: './layouts/home.html',
+  styleUrl: './layouts/home.css'
 })
 
 

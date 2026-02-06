@@ -1,6 +1,116 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, ChangeDetectorRef} from '@angular/core';
+import { NgIf , NgFor} from '@angular/common';
 import { ActivatedRoute, RouterLinkActive, RouterOutlet, RouterLink, Router } from '@angular/router';
 import { CounterService } from './CounterService';
+import { LocalCounterService } from './LocalCounterService';
+import { HttpClient, HttpErrorResponse, HttpHandlerFn, HttpRequest, HttpResponse } from '@angular/common/http';
+import { of, throwError } from 'rxjs';
+
+/*
+HTTPClient
+- HttpClient lets your app fetch and send data over HTTP.
+- Client: Use HttpClient to fetch and send JSON
+
+- GET request -Server se data lana.
+---> Call: this.http.get('https://jsonplaceholder.typicode.com/users')
+---> data instantly nahi milta, Internet me time lagta.
+---> To Angular deta hai: Observable - future me data milega.
+---> For that use .subscribe(...)
+---> Read data with http.get<T>().
+---> Track loading and error state for UX.
+---> Update component state in the subscription.
+
+SUBSCRIBE (in detail)
+structure -
+  .subscribe({
+    next: ...,
+    error: ...
+  })
+this means - data aaye -> next run , error aaye -> error run
+
+next structure
+  next: (data) => {
+    this.users = data;
+    this.loading = false;
+  }
+- server sent the data and html is updated and loading is set to false
+
+error structure
+  error: () => {
+    this.error = 'Failed to load users';
+    this.loading = false;
+  }
+- API got failed - error message display, aand loading is set to false
+
+- POST Requests
+---> Create data with http.post<T>().
+---> Disable the button while sending to prevent duplicates.
+---> Render the returned result or an error message.
+
+- Error Handling
+---> err - error object
+---> err?.status ?? 'unknown' - gives the status otherwise give unknown
+
+Interceptor - middleware between Angular app and server
+Meaning - 
+---> request jaate time intercept hoti hai
+---> response aate time bhi intercept hoti hai
+Here we can add -
+---> request modify kar sakte h
+---> headers add kar sakte h
+---> error handle kar sakte h
+---> retry laga sakte h
+---> logging kar sakte h
+
+Structure
+export const authInterceptor: HttpInterceptorFn = (req, next) => {
+
+  const cloned = req.clone({
+    setHeaders: {
+      Authorization: 'Bearer TOKEN'
+    }
+  });
+
+  return next(cloned);
+};
+
+- req - original http request
+- clone() - request is immutable and cannot be modified directly
+- next() - sends the request to the next step - next interceptor or server
+
+There are also errorInterceptor , retryInterceptor
+
+- Interceptor functions have to added in providers
+providers: [provideHttpClient(withInterceptors([authInterceptor]))]
+
+
+
+*/
+
+// -------------------------------- This is part of the Http client -----------------------------
+// Fake HTTP interceptor so the demo works without external network calls
+export function mockHTTP( req : HttpRequest<any> , next : HttpHandlerFn) {
+  if (req.method === 'GET' && req.url.includes('jsonplaceholder.typicode.com/usersx')) {
+    return throwError(() => new HttpErrorResponse({status : 404, statusText : 'Not Found', url: req.url}));
+  }
+
+  if (req.method === 'GET' && req.url.includes('jsonplaceholder.typicode.com/users')) {
+    const body = [
+      { id: 1, name: 'Leanne Graham', email: 'leanne@example.com' },
+      { id: 2, name: 'Ervin Howell', email: 'ervin@example.com' }
+    ];
+
+    //of() Ye value ko Observable bana do. 
+    //ek fake HTTP response banaya -> usko Observable me wrap kiya -> HttpClient ko return kar diya
+    //Angular HttpClient Observable return karta hai -> Isliye interceptor bhi Observable hi return karega.
+    return of(new HttpResponse({status:200, body}));
+  }
+
+  return next(req);
+  
+}
+
+// -------------------------------- This was part of Router - Auth Guard -------------------------
 
 let loggedIn = true;
 
@@ -10,12 +120,13 @@ export const authGuard = () => {
   return router.createUrlTree(['/']);
 };
 
+// --------------------------------- This is the Component --------------------------------------
 
 @Component({
   selector: 'app-next',
   standalone: true,
   template: `
-  <main style = "margin-left: 20px;" >
+  <main style = "margin-left: 20px;">
     <h2>Next Page</h2>
     <p>You are now on the next component 🎉</p>
     <p> ID - {{ id}} </p>
@@ -24,25 +135,70 @@ export const authGuard = () => {
     <p> Status : {{ loggedIn ? 'Logged In' : 'Logged Out'}} </p>
     
     <nav>
-      <a routerLink="/" routerLinkActive="active">Home</a>
+      <a routerLink="/" routerLinkActive="active">Home </a>
       <a routerLink = '/about' routerLinkActive="active"> About</a>
     </nav>
 
-    <h2> Service Demo </h2>
-    <p> Item Count : {{ itemCounter.itemCount }}</p>
+    <!-- <h2> Service Demo Shared </h2>
+    <p> Item Count : {{ itemCounter.itemCount }} </p>
     <button (click) = "itemCounter.addItems()" > Increment </button>
     <button (click) = "itemCounter.decItems()" > Decrement </button>
-    <button (click) = "itemCounter.resetItems()" > Reset </button>
+    <button (click) = "itemCounter.resetItems()" > Reset </button> -->
+
+    
+    <h2> Service Demo Isolated </h2>
+    <p> Value Count : {{ itemCounter.value }}</p>
+    <button (click) = "itemCounter.inc()" > Increment </button>
+
+
+    <!-- HTTP CLIENT - GET/POST REQUEST DEMO -->
+    <h3> HTTP CLIENT - GET/POST REQUEST DEMO </h3>
+    <button (click) = 'get()'> Load Users </button>
+    <p *ngIf = 'loading'> Loading... </p>
+    <p *ngIf = "error"  style = "color:crimson"> {{ error }}</p>
+    <ul>
+      <li *ngFor = "let u of users" > 
+        {{ u.name}} - {{ u.email}}
+      </li>
+    </ul>
+
+    <button (click) = "post()" >Create Post</button>
+    <p *ngIf = "loading" >Sending...</p>
+    <p *ngIf = "error" style = "color:crimson">{{ error }}</p>
+    <div *ngIf = "result">
+      <p>Created Post ID: {{ result.id }}</p>
+      <p>Title: {{ result.title }}</p>
+    </div>
+
+    <h3>HTTP Error Handling</h3>
+
+    <div>
+      <button (click)="loadOk()" [disabled]="loading">Load OK</button>
+      <button (click)="loadFail()" [disabled]="loading">Load Fail</button>
+      <button (click)="retry()" [disabled]="!lastAction || loading">Retry</button>
+    </div>
+
+    <p *ngIf = "loading">Loading...</p>
+    <p *ngIf = "error" style = "color:crimson">{{ error }}</p>
+    <p *ngIf = "!error && data" style = "color:seagreen">Loaded {{ isArray(data) ? data.length + ' items' : '1 item' }}</p>
+
+    <ul *ngIf = "isArray (data)">
+      <li *ngFor = "let u of data">{{  u.name }} ({{ u.email }})</li>
+    </ul>
+
 
 
     <router-outlet/>
 </main>
   `,
-  imports: [RouterLinkActive, RouterOutlet, RouterLink]
+  imports: [RouterLinkActive, RouterOutlet, RouterLink, NgIf, NgFor],
+  providers: [LocalCounterService]
 })
 
 
 export class NextComponent implements OnInit {
+
+  // --------------------- ROUTING ---------------------------------------
   id ='';
   routes = inject(ActivatedRoute);
 
@@ -64,15 +220,131 @@ export class NextComponent implements OnInit {
 
   
   onClick() {
-    loggedIn = !this.loggedIn;
+    loggedIn = !loggedIn;
   }
 
 
 
-
-
-  // ---------------- Using CounterService ------------------------
+  // ---------------- Using CounterService [SHARED]------------------------
       
   // 1. Make a constructor to use CounterService
-  constructor(public itemCounter : CounterService) { }
+  // constructor(public itemCounter : CounterService) { }
+
+
+  //----------------- Using LocalCounterService [ISOLATED] -----------------
+  
+  constructor(public itemCounter : LocalCounterService) {}
+
+
+
+
+  //---------------------- HTTP Client ----------------------------
+  
+  //GET REQUEST
+  http = inject(HttpClient);
+  loading = false;
+  error = '';
+  users : any[] = [];
+  cd = inject(ChangeDetectorRef);
+
+  get() {
+    this.loading = true;
+    this.error = '';
+
+    //example API
+    this.http.get<any[]>('https://jsonplaceholder.typicode.com/users')
+    .subscribe({
+      next: (data) => {
+        this.users = data;
+        this.loading = false;
+        console.log("DATA AAYA");
+        this.cd.detectChanges(); //this is taaki data aaya uska change ek dum se detect hojaaye
+      },
+      error: () => {
+        this.error = 'Failed to load users';
+        this.loading = false;
+        this.cd.detectChanges();
+      }
+    });
+  }
+
+  //POST REQUEST
+  result : any = null;
+
+  post() {
+    this.loading = true;
+    this.error = '';
+
+    //this.http.post<T>(url, body)
+    this.http.post<any>('https://jsonplaceholder.typicode.com/posts', {
+      title : 'Rohiiii',
+      body : 'I work in Cybersec as Intern',
+      userId : 1
+    }).subscribe({
+      next: (data) => {
+        this.result = data;
+        this.loading = false;
+        console.log('changes done')
+        // setTimeout(() => {
+        //   this.cd.detectChanges();
+        // });
+        this.cd.detectChanges();
+      },
+      error: () => {
+        this.error = 'Failed to create post';
+        this.loading = false;
+        this.cd.detectChanges();
+      }
+    });
+  }
+
+  //ERROR HANDLING
+
+  /*
+  Error message: Build a helpful message from err.status; keep the UI responsive with loading.
+  Retry: Store the lastAction and wire a retry() button to re-run the last request.
+  OK vs Fail: Separate methods help demonstrate success and failure flows.
+  */
+
+  lastAction = '';
+  data : any[] | null = null;
+
+  //Just to check if the value is array or not so that ngFor can iterate and show the results
+  isArray(value: unknown): value is any[] { 
+    return Array.isArray(value as any); 
+  }
+
+  fetch(url: string): void {
+    this.loading = true;
+    this.error = '';
+    this.data = null;
+    this.http.get<any[]>(url).subscribe({
+      next: (res) => { 
+        this.data = res; 
+        this.loading = false; 
+      this.cd.detectChanges();},
+      error: (err) => {
+        const status = err?.status ?? 'unknown';
+        this.error = `Request failed (status ${status}). Please try again.`;
+        this.loading = false;
+        this.cd.detectChanges();
+      }
+    });
+  }
+
+  loadOk() {
+    this.lastAction = 'ok';
+    this.fetch('https://jsonplaceholder.typicode.com/users');
+  }
+
+  loadFail() {
+    this.lastAction = 'fail';
+    this.fetch('https://jsonplaceholder.typicode.com/usersx');
+  }
+
+  retry() {
+    if (this.lastAction === 'ok') this.loadOk();
+    else if (this.lastAction === 'fail') this.loadFail();
+  }
+  
 }

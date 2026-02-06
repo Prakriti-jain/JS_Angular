@@ -165,8 +165,8 @@ import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
   selector: 'app-root',
   standalone: true,
   imports: [RouterOutlet, RouterLink, RouterLinkActive],
-  templateUrl: './app.html',
-  styleUrl : './app.css'
+  templateUrl: './layouts/app.html',
+  styleUrl : './layouts/app.css'
 })
 export class App {
 

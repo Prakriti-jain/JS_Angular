@@ -1,12 +1,14 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { ɵEmptyOutletComponent } from "@angular/router";
 import { CounterService } from './CounterService';
+import { LocalCounterService } from './LocalCounterService';
 
 @Component ({
     selector: 'child-comp',
     standalone: true,
-    templateUrl: './child.html',
-    styleUrl: './child.css'
+    templateUrl: './layouts/child.html',
+    styleUrl: './layouts/child.css',
+    providers: [LocalCounterService]
 })
 
 export class ChildComponent {
@@ -29,10 +31,15 @@ export class ChildComponent {
 
 
 
-    // ---------------- Using CounterService ---------------------------
+    // // ---------------- Using CounterService ---------------------------
     
-    // 1. Make a constructor to use CounterService
-    constructor(public itemCounter : CounterService) { }
+    // // 1. Make a constructor to use CounterService
+    // constructor(public itemCounter : CounterService) { }
 
+
+    
+    //----------------- Using LocalCounterService [ISOLATED] -----------------
+      
+    constructor(public itemCounter : LocalCounterService) {}
 
 }
