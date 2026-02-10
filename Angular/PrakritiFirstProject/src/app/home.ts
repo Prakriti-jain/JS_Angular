@@ -205,6 +205,6 @@ export class HomeComponent {
 
   //move to next page
   goNext() {
-    this.router.navigate(['/next']);
+    this.router.navigate(['/next/13']);
   }
 }

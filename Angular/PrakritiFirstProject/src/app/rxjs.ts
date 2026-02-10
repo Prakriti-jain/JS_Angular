@@ -1,4 +1,8 @@
-import { Component } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { NgIf, NgFor , AsyncPipe, CommonModule} from '@angular/common';
+import { Component, inject } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { of, from, interval, throwError, fromEvent, distinctUntilChanged, debounceTime, switchMap, catchError, map, delay} from 'rxjs';
 
 /*
 --------------------------------- RXJS ------------------------------------------------
@@ -8,7 +12,7 @@ RxJS	                  Meaning
 of(x)	                  emit x
 from(promise)	          promise → observable
 throwError()	          emit error
-interval()	              repeatedly emit
+interval()	            repeatedly emit
 
 Core concept of Rxjs - Observables
 - Observables - stream of values
@@ -26,17 +30,102 @@ RxJS:
 
 Jab data aaye, tab react karo
 
+Execution Flow:
+  Angular start
+  ↓
+  constructor()
+  ↓
+  ngOnInit()
+  ↓
+  HTML render
+  ↓
+  ngAfterViewInit()
+  ↓
+  screen pe show
+
+fromEvent() - write it in ngAfterViewInit() to ensure DOM is ready, otherwise it may not find the element and throw an error.
+
+DIFFERENCE BETWEEN CONSTRUCTOR AND NGONINIT AND NGAFTERVIEWINIT
+Hook	                  Kab run hota	         Use
+constructor	            object create	         DI, setup
+ngOnInit	              component ready	       API, data
+ngAfterViewInit	        HTML ready	           DOM access
+
+Other rxjs functions 
+- debounceTime(X) - rapid events ko ignore karta hai
+---> Xms tak wait karta hai jab tak new input na aaye.
+---> Agar us duration me user fir type karta hai - purana timer cancel, naya 500ms timer start
+
+- switchMap() - ek observable se dusre observable me switch karta hai
+---> pehla observable cancel kar deta hai jab naya emit hota hai
+
+- map() - data transform karne ke liye
+---> jaise array map function
+---> Observable<Observable> - cancel nahi karta, nested observables banata hai
+
+- pipe() - multiple operators ko chain karne ke liye
+---> observable.pipe(operator1, operator2, ...)
+
+
+------------------------------- Async Pipe --------------------------------
+Async pipe template me observable ko subscribe karta hai aur latest value UI me render karta hai.Aur jab component destroy hota hai: automatically unsubscribe bhi kar deta hai.
+
+Syntax
+{{ observable$ | async }}
+
+$ convention hai → variable observable hai
+| async → subscribe + latest value render
+
 */
 
 @Component({
   selector: 'app-next',
   standalone: true,
+  imports: [FormsModule, NgIf, NgFor, AsyncPipe, CommonModule],
   template: `
-  <main style = "margin-left:20px">
+  <main style  = "margin-left:20px">
 
     <h2> Reactive Programming (RXJS) </h2>
+    <h3>Simple RxJS Examples</h3>
+
+    <button id="btn">Click me</button>
+
+    <p>Open console to see RxJS outputs</p>
+
+    <h2> Live Search Bar using Rxjs </h2>
+    <input
+    type = "text"
+    placeholder = "Search..."
+    [(ngModel)] = "searchTerm"
+    (ngModelChange) = "onSearchTermChange($event)"
+    />
+
+    <p *ngIf = "loading">Loading...</p>
+    <p *ngIf = "error" style="color:red">{{ error }}</p>
+
+    <ul>
+      <li *ngFor = "let u of result"> {{ u.firstName }} {{ u.lastName}}</li>
+    </ul>
 
 
+    <!-- Async Pipe -->
+    <h2> Async Pipe Example </h2>
+    <ul>
+      <li *ngFor = "let u of users$ | async "> {{ u.firstName }} {{ u.lastName }}</li>
+    </ul>
+
+    <h3>Current Time: {{ time$ | async | date:'mediumTime'}}</h3>
+
+    <h3>Loading List:</h3>
+    <ng-container *ngIf = "list$ | async as data; else loading" >
+      <ul>
+        <li *ngFor = "let item of data"> {{ item.name }} </li>
+      </ul>
+    </ng-container>
+
+    <ng-template #loading>
+      <p> Wait... Loading Data </p>
+    </ng-template>
   </main>
   `
 })
@@ -60,6 +149,108 @@ export class RxjsComponent {
     */
     constructor() {
 
+      // 1. of() → simple value emit
+      of('Hello RxJS!').subscribe(x => console.log('of() : ', x))
+
+      // 2. from() → promise ko observable me convert, array ko stream me convert
+      from([10, 20, 30]).subscribe(x => console.log('from() : ', x))
+
+      // 3. interval() → har 1 second me emit, always 0 se start
+      // interval(2000).subscribe(x => console.log('interval() : ', x))
+
+      // 4. throwError() → error emit karta hai
+      throwError(() => new Error('Something went wrong!')).subscribe({
+        // next: x => console.log(x),
+        error: err => console.error('throwError() : ', err.message)
+      })
+
+      
     }
-    // interval(1000).subscribe(x=>console.log(x));
+
+    ngAfterViewInit() {
+      // 5. fromEvent() → DOM events ko observable me convert karta hai
+      const btn = document.getElementById('btn');
+
+      // btn! - non-null assertion operator, Angular ko batata hai ki btn null nahi hoga
+      fromEvent(btn!, 'click').subscribe(() => console.log('Button clicked!'))
+    }
+
+
+
+
+    // -------------------------- Live Search Bar using RxJS --------------------------
+    
+    http1 = inject(HttpClient); // Dependency Injection for HttpClient
+    loading = false;
+    result : any[] = [];
+    error = '';
+
+    // Live search ke liye, hum input events ko RxJS se handle karenge
+    // debounceTime() - rapid input ko ignore karta hai, user ke typing ke baad 500ms wait karega
+    // switchMap() - pehle observable ko cancel kar dega jab naya input aayega, aur naya HTTP
+    // request karega
+    // catchError() - agar HTTP request me error aata hai, to usko handle karega aur user ko error message dikhayega
+
+    searchTerm = '';
+
+    onSearchTermChange(term: string) {
+      // this.searchTerm = term;
+      // console.log('Search Term:', this.searchTerm);
+
+      this.loading = true;
+      this.error = '';
+
+      of(this.searchTerm).pipe(
+        debounceTime(500), 
+        distinctUntilChanged(),
+        switchMap(text => {
+          if(!text) return of([]); // agar input empty hai to empty array return karo
+          return this.http1.get<any>(`https://dummyjson.com/users/search?q=${text}`);
+        }),
+        catchError(err => {
+          this.error = 'Error fetching data';
+          return of([]); // Return empty array on error
+        })
+      ).subscribe(res => {
+        console.log('Search Results:', res);
+        this.result = res.users; // Handle both array and object responses
+        this.loading = false;
+        console.log(this.loading)
+      });
+    }
+
+    // --------------------------- Async Pipe Example ---------------------------
+    
+    /*
+    Internally kya hota hai (real flow)
+    - tumne likha : users$ | async
+    - Angular internally karta hai:
+      let sub = users$.subscribe(value => {
+        render(value);
+      });
+    - Aur jab component destroy hota hai: sub.unsubscribe();
+    - Tumhe likhne ki zarurat hi nahi.
+    */
+
+    // ----------- example 1 
+    users$ = this.http1.get<any>('https://dummyjson.com/users').pipe(
+      map(res => res.users), // Extract users array from response
+      catchError(err => {
+        this.error = 'Error fetching users';
+        return of({ users: [] }); // Return empty users array on error
+      })
+    )
+
+
+    // ----------- example 2 
+    time$ = interval(1000).pipe(map(() => new Date()));
+
+    // ------------ example 3
+    list$ = of([{
+      name : 'Prakriti'
+    }, {
+      name : 'Angular'
+    }, {
+      name : 'RxJS'
+    }]).pipe(delay(20000)); //delay of 20 seconds to simulate loading
 }

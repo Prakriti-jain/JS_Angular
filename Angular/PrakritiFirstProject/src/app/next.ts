@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, ChangeDetectorRef} from '@angular/core';
+import { Component, inject, OnInit, ChangeDetectorRef, signal} from '@angular/core';
 import { NgIf , NgFor} from '@angular/common';
 import { ActivatedRoute, RouterLinkActive, RouterOutlet, RouterLink, Router } from '@angular/router';
 import { CounterService } from './CounterService';
@@ -83,9 +83,19 @@ There are also errorInterceptor , retryInterceptor
 - Interceptor functions have to added in providers
 providers: [provideHttpClient(withInterceptors([authInterceptor]))]
 
+-------------------------------- Lists -----------------------------------------------
+
+- Loop: Use @for with track for stable identity and @empty for empty states.
+- Signals: Store list state in a signal (e.g., items = signal([...])) and update immutably with    set()/update().
+- Identity: Track by a stable key (e.g., it.id) to avoid unnecessary DOM work.
+- Derived views: Filter/sort copies of your data for the UI; keep the source list intact (use computed() for derived state).
+- On list changes, Angular reconciles DOM rows with data items.
+- track provides a stable identity (e.g., an id) to minimize DOM churn and preserve focus/inputs.
 
 
 */
+
+
 
 // -------------------------------- This is part of the Http client -----------------------------
 // Fake HTTP interceptor so the demo works without external network calls
@@ -187,6 +197,32 @@ export const authGuard = () => {
     </ul>
 
 
+    <!-- Lists -->
+    <h2> Lists </h2>
+    <h3> Basic Lists </h3>
+
+    <ul>
+      @for (item of items() ; let i = $index; track item) {
+        <li> {{ item }}</li>
+      } @empty { 
+        <li> No items </li>
+      }
+      
+    </ul>
+
+    <button (click) = "add()">Add Item</button>
+    <button (click) = "clear()">Clear</button>
+    <button (click) = "reset()">Reset</button>
+
+    <h3>Lists with track</h3>
+    <ul>
+      @for (it of itemsDic(); let i = $index; track it.id) {
+        <li>{{ i + 1 }}. {{ it.name }} (id: {{ it.id }})</li>
+      }
+    </ul>
+    <button (click) = "renameFirst()">Rename first</button>
+    <button (click) = "shuffle()">Shuffle</button>
+    <button (click) = "addDic()">Add item</button>
 
     <router-outlet/>
 </main>
@@ -211,7 +247,7 @@ export class NextComponent implements OnInit {
     // with snapshot
     // this.id = this.routes.snapshot.paramMap.get('id') ?? ' ';
 
-    //with subscribe
+    // with subscribe
     this.routes.paramMap.subscribe(params => {
       this.id = params.get('id') ?? '';
       console.log("NEW ID:", this.id);
@@ -346,5 +382,40 @@ export class NextComponent implements OnInit {
     if (this.lastAction === 'ok') this.loadOk();
     else if (this.lastAction === 'fail') this.loadFail();
   }
+
+  // ----------------------- Lists -------------------------------\
   
+  //Normal iteration using @for and track id
+  items = signal(['Angular', 'React', 'Vue']);
+
+  add() { this.items.update(arr => [...arr, 'Svelte']); }
+  clear() { this.items.set([]); }
+  reset() { this.items.set(['Angular', 'React', 'Vue']); }
+
+  itemsDic = signal([
+    { id: 1, name: 'Angular' },
+    { id: 2, name: 'React' },
+    { id: 3, name: 'Vue' }
+  ]);
+  nextId = 4;
+  
+  addDic() {
+    this.itemsDic.update(arr => [...arr, { id: this.nextId++, name: 'New' + Date.now()}]);
+  }
+
+  renameFirst() {
+    this.itemsDic.update(arr => 
+      arr.map((item, ind) => ind === 0 ? {... item , name: item.name + '!!!!'} : item));
+  }
+
+  shuffle() {
+    this.itemsDic.update(arr => {
+      const copy = [...arr];
+      for (let i=0 ; i<copy.length; i++) {
+        const ran = Math.floor(Math.random() * (copy.length - i)) + i;
+        [copy[i], copy[ran]] = [copy[ran], copy[i]];
+      }
+      return copy;
+    });
+  }
 }
