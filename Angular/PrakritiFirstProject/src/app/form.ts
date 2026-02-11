@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
@@ -298,6 +298,32 @@ export class FormDemoModule {
       this.showChild = !this.showChild;
     }
 
+    // ------------------------- Conditional Rendering -----------------------
+    // with switch
+    status = signal<"loading" | "success" | "error" | string>("loading");
+
+    //using @if
+    loading = signal(false);
+    error = signal(false);
+    private timer:any;
+
+    startLoading() {
+      this.loading.set(true);
+      this.error.set(false);
+
+      clearTimeout(this.timer);
+      this.timer = setTimeout(() => { this.loading.set(false); }, 1000);
+    }
+
+    showError() {
+      this.error.set(true);
+      this.loading.set(false);
+    }
+
+    reset() {
+      this.error.set(false);
+      this.loading.set(false);
+    }
 
 
 }

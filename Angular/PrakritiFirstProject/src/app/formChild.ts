@@ -49,6 +49,7 @@ export class FormChildComponent implements OnChanges {
     ngAfterViewInit() {
         console.log('ngAfterViewInit called!');
         this.box.nativeElement.focus();
+        
     }
 
     //Destroy

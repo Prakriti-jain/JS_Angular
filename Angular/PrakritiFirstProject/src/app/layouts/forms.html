@@ -72,11 +72,39 @@
     <p>Value: {{ forms.value | json }}</p>
     <p *ngIf = "submitted" style="color: seagreen;">Submitted!</p>
 
-    <!-- --------------------ANGULAR LIFECYCLE HOOKS------------- -->
+    <!----------------------ANGULAR LIFECYCLE HOOKS--------------->
     <h2> Angular LifeCycle Hook </h2>
     <h3> Parent Component </h3>
     <input [(ngModel)] = 'message' placeholder = "Type here ...">
     <button (click) = "toggleChild()"> Toggle Child </button>
     <app-child *ngIf = "showChild" [text] = "message"> </app-child>
+
+
+    <!---------------------- Conditional Rendering ---------------->
+    <h2> Conditional Rendering </h2>
+    <h3> Using Switch</h3>
+    <label>
+        Status : 
+        <select (change) = "status.set($any($event.target).value)">
+            <option value = "loading"> Loading </option>
+            <option value = "success"> Success </option>
+            <option value = "error"> Error </option>
+        </select>
+    </label>
+
+    @switch (status()) {
+        @case ("loading") { <p style = "color: orange;"> Loading...</p> }
+        @case ("success") { <p style = "color: seagreen;"> Success! </p> }
+        @case ("error") { <p style = "color: crimson;"> Oops! Error </p> }
+        @default {<p> Unknown Status </p>}
+    }
+
+    <h3> Multi-state with &#64;if </h3>
+    <div class="toolbar">
+      <button (click) = "startLoading()">Start Loading</button>
+      <button (click) = "showError()">Set Error</button>
+      <button (click) = "reset()">Reset</button>
+      <p style="margin-left:8px;color:#666"> loading = {{ loading() }} error = {{ error() }}</p>
+    </div> 
 
 </main>
