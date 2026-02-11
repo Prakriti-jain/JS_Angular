@@ -1,8 +1,8 @@
 import { HttpClient } from '@angular/common/http';
 import { NgIf, NgFor , AsyncPipe, CommonModule} from '@angular/common';
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectorRef, PipeTransform, Pipe } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { of, from, interval, throwError, fromEvent, distinctUntilChanged, debounceTime, switchMap, catchError, map, delay} from 'rxjs';
+import { of, from, interval, throwError, fromEvent, distinctUntilChanged, debounceTime, switchMap, catchError, map, delay, Subject, finalize} from 'rxjs';
 
 /*
 --------------------------------- RXJS ------------------------------------------------
@@ -48,7 +48,7 @@ fromEvent() - write it in ngAfterViewInit() to ensure DOM is ready, otherwise it
 DIFFERENCE BETWEEN CONSTRUCTOR AND NGONINIT AND NGAFTERVIEWINIT
 Hook	                  Kab run hota	         Use
 constructor	            object create	         DI, setup
-ngOnInit	              component ready	       API, data
+ngOnInit	              component ready	       API calls, data load, timer start
 ngAfterViewInit	        HTML ready	           DOM access
 
 Other rxjs functions 
@@ -68,6 +68,7 @@ Other rxjs functions
 
 
 ------------------------------- Async Pipe --------------------------------
+
 Async pipe template me observable ko subscribe karta hai aur latest value UI me render karta hai.Aur jab component destroy hota hai: automatically unsubscribe bhi kar deta hai.
 
 Syntax
@@ -76,12 +77,33 @@ Syntax
 $ convention hai → variable observable hai
 | async → subscribe + latest value render
 
+------------------------------ Custom Pipe ---------------------------------
+
+Pipe = data ko display karne se pehle format karna
+Custom pipe = apna formatting logic bana sakte hai
+
+syntax
+@Pipe({ name: 'titlecase2', standalone: true })
+export class TitleCase2Pipe implements PipeTransform { }
+every pipe has a function transform() which takes the input, does the formatting and return 
 */
+
+// --------------------------- It is a Custom Pipe -------------------------------
+@Pipe({name : 'titlecase2', standalone : true})
+export class TitleCase2Pipe implements PipeTransform {
+  transform(value: string) : string {
+    if(!value) return "";
+    return value.split(/\s+/) //regex express [ \s means space(blank, tab, newline), + means ek se zyada, so overall it splits by multiple spaces]
+                .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+                .join(' ');
+  }
+}
+
 
 @Component({
   selector: 'app-next',
   standalone: true,
-  imports: [FormsModule, NgIf, NgFor, AsyncPipe, CommonModule],
+  imports: [FormsModule, NgIf, NgFor, AsyncPipe, CommonModule, TitleCase2Pipe],
   template: `
   <main style  = "margin-left:20px">
 
@@ -94,17 +116,17 @@ $ convention hai → variable observable hai
 
     <h2> Live Search Bar using Rxjs </h2>
     <input
-    type = "text"
-    placeholder = "Search..."
-    [(ngModel)] = "searchTerm"
-    (ngModelChange) = "onSearchTermChange($event)"
+      type = "text"
+      placeholder = "Search..."
+      [(ngModel)] = "searchTerm"
+      (ngModelChange) = "onSearchTermChange($event)"
     />
 
-    <p *ngIf = "loading">Loading...</p>
+    <p *ngIf = "loadingg">Loading...</p>
     <p *ngIf = "error" style="color:red">{{ error }}</p>
 
     <ul>
-      <li *ngFor = "let u of result"> {{ u.firstName }} {{ u.lastName}}</li>
+      <li *ngFor = "let u of result"> {{ u.firstName }} {{ u.lastName}} {{ u.maidenName}} </li>
     </ul>
 
 
@@ -126,9 +148,18 @@ $ convention hai → variable observable hai
     <ng-template #loading>
       <p> Wait... Loading Data </p>
     </ng-template>
+
+    <!-- Custom Pipes -->
+    <h3>Custom Pipe</h3>
+    <label>
+      Text: <input [(ngModel)] = "text" placeholder="type here" />
+    </label> 
+    <p>Original: {{ text }}</p>
+    <p>TitleCase2: {{ text | titlecase2 }}</p>
   </main>
   `
 })
+
 
 export class RxjsComponent {
 
@@ -163,7 +194,6 @@ export class RxjsComponent {
         // next: x => console.log(x),
         error: err => console.error('throwError() : ', err.message)
       })
-
       
     }
 
@@ -175,15 +205,17 @@ export class RxjsComponent {
       fromEvent(btn!, 'click').subscribe(() => console.log('Button clicked!'))
     }
 
+    
 
 
 
     // -------------------------- Live Search Bar using RxJS --------------------------
     
     http1 = inject(HttpClient); // Dependency Injection for HttpClient
-    loading = false;
+    loadingg = false;
     result : any[] = [];
     error = '';
+    cd = inject(ChangeDetectorRef);
 
     // Live search ke liye, hum input events ko RxJS se handle karenge
     // debounceTime() - rapid input ko ignore karta hai, user ke typing ke baad 500ms wait karega
@@ -197,27 +229,34 @@ export class RxjsComponent {
       // this.searchTerm = term;
       // console.log('Search Term:', this.searchTerm);
 
-      this.loading = true;
       this.error = '';
+      this.loadingg = true;
+      this.searchSubject.next(term);
+    }
 
-      of(this.searchTerm).pipe(
-        debounceTime(500), 
+    searchSubject = new Subject<string>();
+
+    ngOnInit() {
+      this.searchSubject.pipe(
+        debounceTime(1000), 
         distinctUntilChanged(),
         switchMap(text => {
-          if(!text) return of([]); // agar input empty hai to empty array return karo
+          if(!text) return of({ users: [] }); // agar input empty hai to empty array return karo
           return this.http1.get<any>(`https://dummyjson.com/users/search?q=${text}`);
         }),
         catchError(err => {
           this.error = 'Error fetching data';
-          return of([]); // Return empty array on error
+          return of({users : []}); // Return empty array on error
         })
       ).subscribe(res => {
         console.log('Search Results:', res);
         this.result = res.users; // Handle both array and object responses
-        this.loading = false;
-        console.log(this.loading)
+        this.loadingg = false;
+        console.log(this.loadingg)
+        // this.cd.detectChanges();
       });
     }
+
 
     // --------------------------- Async Pipe Example ---------------------------
     
@@ -253,4 +292,10 @@ export class RxjsComponent {
     }, {
       name : 'RxJS'
     }]).pipe(delay(20000)); //delay of 20 seconds to simulate loading
+
+
+    // ---------------------------- Custom Pipe ---------------------------------------
+    text = ""
+
+
 }

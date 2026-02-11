@@ -1,5 +1,5 @@
-import { Component, inject, OnInit, ChangeDetectorRef, signal} from '@angular/core';
-import { NgIf , NgFor} from '@angular/common';
+import { Component, inject, OnInit, ChangeDetectorRef, signal, computed} from '@angular/core';
+import { NgIf , NgFor, CurrencyPipe} from '@angular/common';
 import { ActivatedRoute, RouterLinkActive, RouterOutlet, RouterLink, Router } from '@angular/router';
 import { CounterService } from './CounterService';
 import { LocalCounterService } from './LocalCounterService';
@@ -92,29 +92,45 @@ providers: [provideHttpClient(withInterceptors([authInterceptor]))]
 - On list changes, Angular reconciles DOM rows with data items.
 - track provides a stable identity (e.g., an id) to minimize DOM churn and preserve focus/inputs.
 
+items = original list
+view = screen par dikhne wali list
+
+when users types anything for filtering, the filtered list shown on the UI is - view
+
+view = computed(() => {
+  return items()
+    .filter(...)
+    .sort(...);
+});
+
+computed() - automatic function 
+- whenever there is change in items (original list), or change in query, or sort change 
+- then view is calculated again
+- no need to manually call the function again and again
 
 */
 
 
 
 // -------------------------------- This is part of the Http client -----------------------------
+
 // Fake HTTP interceptor so the demo works without external network calls
 export function mockHTTP( req : HttpRequest<any> , next : HttpHandlerFn) {
   if (req.method === 'GET' && req.url.includes('jsonplaceholder.typicode.com/usersx')) {
     return throwError(() => new HttpErrorResponse({status : 404, statusText : 'Not Found', url: req.url}));
   }
 
-  if (req.method === 'GET' && req.url.includes('jsonplaceholder.typicode.com/users')) {
-    const body = [
-      { id: 1, name: 'Leanne Graham', email: 'leanne@example.com' },
-      { id: 2, name: 'Ervin Howell', email: 'ervin@example.com' }
-    ];
+  // if (req.method === 'GET' && req.url.includes('jsonplaceholder.typicode.com/users')) {
+  //   const body = [
+  //     { id: 1, name: 'Leanne Graham', email: 'leanne@example.com' },
+  //     { id: 2, name: 'Ervin Howell', email: 'ervin@example.com' }
+  //   ];
 
-    //of() Ye value ko Observable bana do. 
-    //ek fake HTTP response banaya -> usko Observable me wrap kiya -> HttpClient ko return kar diya
-    //Angular HttpClient Observable return karta hai -> Isliye interceptor bhi Observable hi return karega.
-    return of(new HttpResponse({status:200, body}));
-  }
+  //   //of() Ye value ko Observable bana do. 
+  //   //ek fake HTTP response banaya -> usko Observable me wrap kiya -> HttpClient ko return kar diya
+  //   //Angular HttpClient Observable return karta hai -> Isliye interceptor bhi Observable hi return karega.
+  //   return of(new HttpResponse({status:200, body}));
+  // }
 
   return next(req);
   
@@ -183,9 +199,9 @@ export const authGuard = () => {
     <h3>HTTP Error Handling</h3>
 
     <div>
-      <button (click)="loadOk()" [disabled]="loading">Load OK</button>
-      <button (click)="loadFail()" [disabled]="loading">Load Fail</button>
-      <button (click)="retry()" [disabled]="!lastAction || loading">Retry</button>
+      <button (click) = "loadOk()" [disabled]="loading">Load OK</button>
+      <button (click) = "loadFail()" [disabled]="loading">Load Fail</button>
+      <button (click) = "retry()" [disabled]="!lastAction || loading">Retry</button>
     </div>
 
     <p *ngIf = "loading">Loading...</p>
@@ -199,8 +215,9 @@ export const authGuard = () => {
 
     <!-- Lists -->
     <h2> Lists </h2>
-    <h3> Basic Lists </h3>
 
+    <!-- Basic Lists -->
+    <h3> Basic Lists </h3>
     <ul>
       @for (item of items() ; let i = $index; track item) {
         <li> {{ item }}</li>
@@ -214,6 +231,7 @@ export const authGuard = () => {
     <button (click) = "clear()">Clear</button>
     <button (click) = "reset()">Reset</button>
 
+    <!-- List -->
     <h3>Lists with track</h3>
     <ul>
       @for (it of itemsDic(); let i = $index; track it.id) {
@@ -224,10 +242,34 @@ export const authGuard = () => {
     <button (click) = "shuffle()">Shuffle</button>
     <button (click) = "addDic()">Add item</button>
 
+    <!-- List with Filter and Sort -->
+    <h3> List Filter and Sort </h3>
+    <label>Search: <input #q (input) = "query.set(q.value)" placeholder="Type to filter..." /></label>
+    <button (click) = "setSort('name')" > Sort by Name </button>
+    <button (click) = "setSort('price')" > Sort by Price</button>
+    <button (click) = "toggleDirection()"> {{ sortDir() === 1 ? 'Asc' : 'Desc'}} </button>
+
+    <table style = "padding : 8px">
+      <thead>
+        <tr>
+          <th style="border:1px solid #ddd ; padding:8px ; background:#f7f7f7;">Name</th>
+          <th style="border:1px solid #ddd ; padding:8px ; background:#f7f7f7 ;">Price</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (p of view(); track p.name) {
+          <tr>
+            <td style="border:1px solid #ddd ; padding:8px;">{{ p.name }}</td>
+            <td style="border:1px solid #ddd ; padding:8px;">{{ p.price | currency:'INR' }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+
     <router-outlet/>
 </main>
   `,
-  imports: [RouterLinkActive, RouterOutlet, RouterLink, NgIf, NgFor],
+  imports: [RouterLinkActive, RouterOutlet, RouterLink, NgIf, NgFor, CurrencyPipe],
   providers: [LocalCounterService]
 })
 
@@ -383,7 +425,10 @@ export class NextComponent implements OnInit {
     else if (this.lastAction === 'fail') this.loadFail();
   }
 
-  // ----------------------- Lists -------------------------------\
+
+
+
+  // ----------------------- Lists -------------------------------
   
   //Normal iteration using @for and track id
   items = signal(['Angular', 'React', 'Vue']);
@@ -391,6 +436,8 @@ export class NextComponent implements OnInit {
   add() { this.items.update(arr => [...arr, 'Svelte']); }
   clear() { this.items.set([]); }
   reset() { this.items.set(['Angular', 'React', 'Vue']); }
+
+  // List with Track
 
   itemsDic = signal([
     { id: 1, name: 'Angular' },
@@ -417,5 +464,40 @@ export class NextComponent implements OnInit {
       }
       return copy;
     });
+  }
+
+
+  //List with filter and sort
+
+  itemsAgain = signal([{ name: 'Angular', price: 20 }, { name: 'React', price: 10 }, { name: 'Vue', price: 39 }]);
+  query = signal('');
+
+  //signal<type>('initialValue')
+  sortKey = signal<'name' | 'price'>('name');
+  sortDir = signal<1 | -1>(1);
+
+  view = computed(() => {
+    const q = this.query().toLowerCase();
+    const direction = this.sortDir();
+    const key = this.sortKey();
+    return this.itemsAgain()
+      .filter(item => item.name.toLocaleLowerCase().includes(q))
+      .sort((a, b) => {
+        const av = a[key];
+        const bv = b[key];
+        return (av < bv) ? (-1 * direction) : (av > bv) ? (1 * direction) : 0;
+      });
+  });
+
+  setSort(key : 'name' | 'price') {
+    if(this.sortKey() === key) { //in this direction toggle hojayega asc -> desc or vice versa 
+      this.toggleDirection();
+    } else {
+      this.sortKey.set(key);
+    }
+  }
+
+  toggleDirection(){
+    this.sortDir.set(this.sortDir() === 1 ? -1 : 1);
   }
 }

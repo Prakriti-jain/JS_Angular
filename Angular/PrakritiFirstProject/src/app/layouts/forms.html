@@ -1,0 +1,82 @@
+<main style = "margin-left: 20px;">
+    <h2> Forms in Angular </h2>
+
+    <!-- Basic Forms -->
+    <h3> Basic Form </h3>
+    <form #ff = "ngForm" (ngSubmit) = "onSubmit()">
+        <label>
+            Name :
+            <input name = "nam" [(ngModel)] = "nam" placeholder="Enter your name">
+        </label>
+        <button type = "submit"> Submit </button>
+    </form>
+
+    <p> Value : {{ nam }} </p>
+    <p *ngIf = "submitted" > Submitted! </p>
+
+    <!-- Forms Validation -->
+    <h3> Forms Validation </h3>
+    <form #f = "ngForm" (ngSubmit) = "onSub()" novalidate>
+        <label>
+            Name :
+            <input name = "name" [(ngModel)] = "model.name" required minlength = "3" #name = "ngModel">
+        </label>
+        <div *ngIf = "name.invalid && (name.dirty || name.touched)" style = "color: crimson;">
+            <small *ngIf = "name.errors && name.errors['required']"> Name is required </small>
+            <small *ngIf = "name.errors && name.errors['minlength']"> Name must be atleast 3 characters long </small>
+        </div>
+        <label>
+            Email :
+            <input name = "email" [(ngModel)] = "model.email" required email #email = "ngModel">
+        </label>
+        <div *ngIf = "email.invalid && (email.dirty || email.touched || sub)" style = "color: crimson;">
+            <small *ngIf = "email.errors && email.errors['required']"> Email is required </small>
+            <small *ngIf = "email.errors && email.errors['email']"> Email must be valid </small>
+        </div>
+
+        <button type = "submit" [disabled] = "f.invalid"> Submit </button>
+    </form>
+
+    <p *ngIf = "sub"> Submitted : {{ model | json }}</p>
+
+    <!-- Reactive Forms -->
+    <h3> Reactive Forms </h3>
+    <form [formGroup] = "forms" (ngSubmit) = "onSubm()">
+        <label>
+            Name
+            <input formControlName = "name" placeholder = "Your name">
+        </label>
+        <div *ngIf = "forms.controls.name.invalid && (forms.controls.name.dirty || forms.controls.name.touched || submitted)" style="color:crimson">
+            <small *ngIf = "forms.controls.name.errors && forms.controls.name.errors['required']"> Name is required.</small>
+            <small *ngIf = "forms.controls.name.errors && forms.controls.name.errors['minlength']"> Min 3 characters.</small>
+        </div>
+
+        <label>
+            Email
+            <input formControlName="email" placeholder="you@example.com">
+        </label>
+        <div *ngIf = "forms.controls.email.invalid && (forms.controls.email.dirty || forms.controls.email.touched || submitted)" style="color:crimson">
+            <small *ngIf = "forms.controls.email.errors && forms.controls.email.errors['required']">Email is required.</small>
+            <small *ngIf = "forms.controls.email.errors && forms.controls.email.errors['email']">Email must be valid.</small>
+        </div>
+
+        <label>
+            <input type = "checkbox" formControlName = "newsletter">
+            Subscribe to newsletter
+        </label>
+
+        <button type = "submit" [disabled] = "forms.invalid">Submit</button>
+    </form>
+
+    <p>Status: {{ forms.status }}</p>
+    <p>Value: {{ forms.value | json }}</p>
+    <p *ngIf = "submitted" style="color: seagreen;">Submitted!</p>
+
+    <!-- --------------------ANGULAR LIFECYCLE HOOKS------------- -->
+    <h2> Angular LifeCycle Hook </h2>
+    <h3> Parent Component </h3>
+    <input [(ngModel)] = 'message' placeholder = "Type here ...">
+    <button (click) = "toggleChild()"> Toggle Child </button>
+    <app-child *ngIf = "showChild" [text] = "message"> </app-child>
+
+</main>
